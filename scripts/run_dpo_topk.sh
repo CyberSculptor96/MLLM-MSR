@@ -10,6 +10,7 @@ MODEL_PATH=${PROJECT_DIR}/models/llava-v1.6-mistral-7b-hf
 SFT_CKPT=${PROJECT_DIR}/checkpoints/sft_microlens/epoch_0
 SCORE_CACHE=${PROJECT_DIR}/checkpoints/score_cache_sft.json
 LOG_DIR=${PROJECT_DIR}/logs
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p ${LOG_DIR}
 cd ${PROJECT_DIR}/train/dpo
@@ -33,7 +34,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 ${PYTHON} ${TRAIN_SCRIPT} \
     --cache_max_users 2000 \
     --score_cache_path ${SCORE_CACHE} \
     --skip_cache_refresh \
-    > ${LOG_DIR}/dpo_topk5.log 2>&1 &
+    > ${LOG_DIR}/dpo_topk5_${TIMESTAMP}.log 2>&1 &
 PID_K5=$!
 echo "  K=5 PID: ${PID_K5}, Log: ${LOG_DIR}/dpo_topk5.log"
 
@@ -49,7 +50,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 ${PYTHON} ${TRAIN_SCRIPT} \
     --cache_max_users 2000 \
     --score_cache_path ${SCORE_CACHE} \
     --skip_cache_refresh \
-    > ${LOG_DIR}/dpo_topk10.log 2>&1 &
+    > ${LOG_DIR}/dpo_topk10_${TIMESTAMP}.log 2>&1 &
 PID_K10=$!
 echo "  K=10 PID: ${PID_K10}, Log: ${LOG_DIR}/dpo_topk10.log"
 

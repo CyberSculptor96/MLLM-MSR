@@ -13,6 +13,7 @@ MODEL_PATH=${PROJECT_DIR}/models/llava-v1.6-mistral-7b-hf
 SFT_CKPT=${PROJECT_DIR}/checkpoints/sft_microlens/epoch_0
 SCORE_CACHE=${PROJECT_DIR}/checkpoints/score_cache_sft.json
 LOG_DIR=${PROJECT_DIR}/logs
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p ${LOG_DIR}
 cd ${PROJECT_DIR}/train/dpo
@@ -39,9 +40,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 ${PYTHON} ${TRAIN_SCRIPT} \
     --cache_max_users 2000 \
     --score_cache_path ${SCORE_CACHE} \
     --skip_cache_refresh \
-    > ${LOG_DIR}/dpo_hard.log 2>&1 &
+    > ${LOG_DIR}/dpo_hard_${TIMESTAMP}.log 2>&1 &
 PID_HARD=$!
-echo "  PID: ${PID_HARD}, Log: ${LOG_DIR}/dpo_hard.log"
+echo "  PID: ${PID_HARD}, Log: ${LOG_DIR}/dpo_hard_${TIMESTAMP}.log"
 
 # --- Group 2: Top-K on GPU 4,5,6,7 ---
 echo ""
@@ -56,9 +57,9 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 ${PYTHON} ${TRAIN_SCRIPT} \
     --cache_max_users 2000 \
     --score_cache_path ${SCORE_CACHE} \
     --skip_cache_refresh \
-    > ${LOG_DIR}/dpo_top_k.log 2>&1 &
+    > ${LOG_DIR}/dpo_top_k_${TIMESTAMP}.log 2>&1 &
 PID_TOPK=$!
-echo "  PID: ${PID_TOPK}, Log: ${LOG_DIR}/dpo_top_k.log"
+echo "  PID: ${PID_TOPK}, Log: ${LOG_DIR}/dpo_top_k_${TIMESTAMP}.log"
 
 echo ""
 echo "============================================"
