@@ -523,7 +523,10 @@ def main():
         image_dir = os.path.join(base_dir, 'data', 'microlens', 'images')
         test_path = os.path.join(base_dir, 'data', 'microlens', 'dpo_ready', 'test.json')
 
-    save_dir = os.path.join(base_dir, 'checkpoints', f'dpo_{args.dataset}_{args.strategy}')
+    suffix = f'dpo_{args.dataset}_{args.strategy}'
+    if args.strategy == 'top_k' and config['top_k'] != 50:
+        suffix += f"_k{config['top_k']}"
+    save_dir = os.path.join(base_dir, 'checkpoints', suffix)
     log_dir = os.path.join(base_dir, 'tb_logs')
 
     print("=" * 60)
@@ -678,7 +681,7 @@ def main():
     # TensorBoard logger
     tb_logger = TensorBoardLogger(
         save_dir=log_dir,
-        name=f"dpo_{args.dataset}_{args.strategy}",
+        name=suffix,
     )
 
     # Callbacks
