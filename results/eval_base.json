@@ -1,0 +1,10 @@
+{
+  "model": "base (llava-v1.6-mistral-7b-hf, no LoRA)",
+  "dataset": "microlens",
+  "num_users": 100,
+  "recall_at_5": 0.2100,
+  "mrr_at_5": 0.0902,
+  "avg_p_yes_pos": 0.3628,
+  "avg_p_yes_neg": 0.3474,
+  "separation": 0.0154
+}

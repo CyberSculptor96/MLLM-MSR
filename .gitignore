@@ -17,6 +17,7 @@ MLLM-MSR/data/*/images/
 __pycache__/
 *.pyc
 *.pyo
+.venv/
 
 # Lightning logs
 lightning_logs/

@@ -33,9 +33,13 @@ PROMPT_TEMPLATE = (
 def evaluate(model, processor, test_data, image_dir, device='cuda:0', num_users=100):
     """Quick evaluation: compute Recall@5, MRR@5 on small subset."""
     model.eval()
-    yes_token_id = processor.tokenizer.convert_tokens_to_ids('Yes')
-    no_token_id = processor.tokenizer.convert_tokens_to_ids('No')
+    # IMPORTANT: After "[/INST] ", the answer token has a space prefix (▁Yes / ▁No)
+    # Must use encode() to get the correct token ID that matches training
+    yes_token_id = processor.tokenizer.encode('Yes', add_special_tokens=False)[0]  # ▁Yes = 5592
+    no_token_id = processor.tokenizer.encode('No', add_special_tokens=False)[0]    # ▁No = 1770
     print(f"  Yes token ID: {yes_token_id}, No token ID: {no_token_id}")
+    print(f"  Yes token: {processor.tokenizer.convert_ids_to_tokens(yes_token_id)}")
+    print(f"  No token: {processor.tokenizer.convert_ids_to_tokens(no_token_id)}")
 
     test_subset = test_data[:num_users]
     recall_at_5 = []
@@ -173,8 +177,11 @@ def main():
         _attn_implementation="flash_attention_2",
     )
 
-    print(f"Loading SFT LoRA from {args.checkpoint_path}...")
-    model = PeftModel.from_pretrained(model, args.checkpoint_path)
+    if args.checkpoint_path and args.checkpoint_path != "__NONE__":
+        print(f"Loading SFT LoRA from {args.checkpoint_path}...")
+        model = PeftModel.from_pretrained(model, args.checkpoint_path)
+    else:
+        print("Evaluating BASE model (no LoRA)...")
     model = model.to(args.device)
     model.eval()
 
@@ -183,7 +190,10 @@ def main():
                        device=args.device, num_users=args.num_users)
 
     # Save results
-    results_path = os.path.join(os.path.dirname(args.checkpoint_path), 'quick_eval_results.json')
+    if args.checkpoint_path and args.checkpoint_path != "__NONE__":
+        results_path = os.path.join(args.checkpoint_path, 'quick_eval_results.json')
+    else:
+        results_path = os.path.join('logs', 'eval_base_results.json')
     with open(results_path, 'w') as f:
         json.dump(metrics, f, indent=2)
     print(f"\nResults saved to {results_path}")

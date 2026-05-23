@@ -1,0 +1,10 @@
+{
+  "model": "sft_microlens/epoch_1",
+  "dataset": "microlens",
+  "num_users": 100,
+  "recall_at_5": 0.1600,
+  "mrr_at_5": 0.0643,
+  "avg_p_yes_pos": 0.3606,
+  "avg_p_yes_neg": 0.3751,
+  "separation": -0.0145
+}
