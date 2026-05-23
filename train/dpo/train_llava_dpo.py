@@ -596,10 +596,11 @@ def main():
 
     # Create datasets
     # Write splits to tmp files for DPOPreferenceDataset (unique per strategy to avoid collision)
+    split_suffix = f"{args.strategy}_k{args.top_k}" if args.strategy == 'top_k' else args.strategy
     train_tmp = os.path.join(base_dir, 'data', args.dataset if args.dataset != 'video_games' else 'amazon',
-                             'dpo_ready', f'_dpo_train_split_{args.strategy}.json')
+                             'dpo_ready', f'_dpo_train_split_{split_suffix}.json')
     val_tmp = os.path.join(base_dir, 'data', args.dataset if args.dataset != 'video_games' else 'amazon',
-                           'dpo_ready', f'_dpo_val_split_{args.strategy}.json')
+                           'dpo_ready', f'_dpo_val_split_{split_suffix}.json')
     local_rank = int(os.environ.get('LOCAL_RANK', 0))
     if local_rank == 0:
         with open(train_tmp, 'w') as f:

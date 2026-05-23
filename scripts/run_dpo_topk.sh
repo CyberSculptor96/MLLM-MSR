@@ -3,8 +3,8 @@
 export PATH=/usr/bin:/usr/local/bin:/bin:$PATH
 export https_proxy=http://agent.baidu.com:8891
 
-PYTHON=/root/miniforge3/envs/rodpo/bin/python
-PROJECT_DIR=/root/paddlejob/workspace/codelab/projects/rodpo/MLLM-MSR
+PYTHON=/root/paddlejob/gpfsspace/baidu/personal-code/sys2-all-tools/MLLM-MSR/.venv/bin/python
+PROJECT_DIR=/root/paddlejob/gpfsspace/baidu/personal-code/sys2-all-tools/MLLM-MSR
 TRAIN_SCRIPT=${PROJECT_DIR}/train/dpo/train_llava_dpo.py
 MODEL_PATH=${PROJECT_DIR}/models/llava-v1.6-mistral-7b-hf
 SFT_CKPT=${PROJECT_DIR}/checkpoints/sft_microlens/epoch_0
