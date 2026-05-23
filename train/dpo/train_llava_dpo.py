@@ -333,7 +333,7 @@ class ScoreCacheRefreshCallback(Callback):
 
     def __init__(self, train_dataset: 'DPOPreferenceDataset', processor,
                  image_dir: str, strategy: str, cache_dir: str,
-                 max_users: int = 5000, batch_size: int = 8):
+                 max_users: int = 5000, batch_size: int = 8, skip: bool = False):
         self.train_dataset = train_dataset
         self.processor = processor
         self.image_dir = image_dir
@@ -341,11 +341,12 @@ class ScoreCacheRefreshCallback(Callback):
         self.cache_dir = cache_dir
         self.max_users = max_users
         self.batch_size = batch_size
+        self.skip = skip
 
     def on_train_epoch_end(self, trainer, pl_module):
         """Refresh cache at end of epoch, ready for next epoch."""
-        if self.strategy == 'random':
-            return  # Random never needs cache
+        if self.strategy == 'random' or self.skip:
+            return
 
         if trainer.global_rank != 0:
             return
@@ -494,6 +495,8 @@ def main():
                         help='Max users to score during cache refresh')
     parser.add_argument('--top_k', type=int, default=None,
                         help='K value for top_k negative sampling strategy')
+    parser.add_argument('--skip_cache_refresh', action='store_true',
+                        help='Skip score cache refresh between epochs (use initial cache only)')
     parser.add_argument('--ckpt_path', type=str, default=None,
                         help='Resume training from this checkpoint path')
     args = parser.parse_args()
@@ -688,6 +691,7 @@ def main():
     # Callbacks
     cache_dir = os.path.join(save_dir, 'score_caches')
     callbacks = [
+        SaveDPOCallback(save_dir, processor),
         ScoreCacheRefreshCallback(
             train_dataset=train_dataset,
             processor=processor,
@@ -696,8 +700,8 @@ def main():
             cache_dir=cache_dir,
             max_users=args.cache_max_users,
             batch_size=8,
+            skip=args.skip_cache_refresh,
         ),
-        SaveDPOCallback(save_dir, processor),
         LogLRCallback(),
         EarlyStopping(
             monitor='val/dpo_loss',

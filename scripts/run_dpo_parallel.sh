@@ -38,6 +38,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 ${PYTHON} ${TRAIN_SCRIPT} \
     --epochs 2 \
     --cache_max_users 2000 \
     --score_cache_path ${SCORE_CACHE} \
+    --skip_cache_refresh \
     > ${LOG_DIR}/dpo_hard.log 2>&1 &
 PID_HARD=$!
 echo "  PID: ${PID_HARD}, Log: ${LOG_DIR}/dpo_hard.log"
@@ -54,6 +55,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 ${PYTHON} ${TRAIN_SCRIPT} \
     --epochs 2 \
     --cache_max_users 2000 \
     --score_cache_path ${SCORE_CACHE} \
+    --skip_cache_refresh \
     > ${LOG_DIR}/dpo_top_k.log 2>&1 &
 PID_TOPK=$!
 echo "  PID: ${PID_TOPK}, Log: ${LOG_DIR}/dpo_top_k.log"
