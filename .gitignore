@@ -1,0 +1,28 @@
+# Images
+*.jpg
+*.png
+*.jpeg
+
+# Model weights
+models/
+*.safetensors
+*.bin
+
+# Data files (too large for git)
+MLLM-MSR/data/*/dpo_ready/*.json
+MLLM-MSR/data/*/images/
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Lightning logs
+lightning_logs/
+
+# Checkpoints
+checkpoints/
+
+# OS
+.DS_Store
