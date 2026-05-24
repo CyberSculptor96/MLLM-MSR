@@ -36,8 +36,8 @@ class ScoreCache:
         self.device = device
         self.cache: Dict[int, Dict[int, float]] = {}
 
-        # Get Yes token ID
-        self.yes_token_id = processor.tokenizer.convert_tokens_to_ids('Yes')
+        # Get Yes token ID (with space prefix, matching training)
+        self.yes_token_id = processor.tokenizer.encode('Yes', add_special_tokens=False)[0]
 
     def _load_image(self, image_path: str) -> Image.Image:
         full_path = os.path.join(self.image_dir, image_path)

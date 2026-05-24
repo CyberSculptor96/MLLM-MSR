@@ -74,7 +74,8 @@ def evaluate_model(model, processor, test_data, image_dir, device='cuda',
         max_users: limit for debugging
     """
     model.eval()
-    yes_token_id = processor.tokenizer.convert_tokens_to_ids('Yes')
+    # IMPORTANT: use encode() to get correct token with space prefix (▁Yes)
+    yes_token_id = processor.tokenizer.encode('Yes', add_special_tokens=False)[0]
 
     if max_users:
         test_data = test_data[:max_users]

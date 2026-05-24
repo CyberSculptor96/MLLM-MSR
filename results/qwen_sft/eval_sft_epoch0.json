@@ -1,0 +1,11 @@
+{
+  "model": "SFT epoch_0 (Qwen2.5-VL-7B-Instruct + LoRA r=16)",
+  "dataset": "microlens",
+  "num_users": 100,
+  "token_fix": "encode-based (Yes/No)",
+  "recall_at_5": 0.6900,
+  "mrr_at_5": 0.4663,
+  "avg_p_yes_pos": 0.5710,
+  "avg_p_yes_neg": 0.2713,
+  "separation": 0.2997
+}

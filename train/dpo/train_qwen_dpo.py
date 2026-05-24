@@ -594,7 +594,7 @@ def main():
     model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
         model_id,
         torch_dtype=torch.bfloat16,
-        attn_implementation="flash_attention_2",
+        attn_implementation="sdpa",
     )
 
     # ---- Step 2: Merge SFT LoRA into base (becomes reference) ----
@@ -630,7 +630,7 @@ def main():
     val_data_raw = all_dpo_data[-val_size:]
     print(f"  Train split: {len(train_data_raw)}, Val split: {len(val_data_raw)}")
 
-    # Write splits to tmp files
+    # Write splits to tmp files (only rank 0 writes, others wait)
     split_suffix = f"{strategy}_k{config['top_k']}" if strategy == 'top_k' else strategy
     data_subdir = args.dataset if args.dataset != 'video_games' else 'amazon'
     train_tmp = os.path.join(base_dir, 'data', data_subdir,
@@ -638,10 +638,20 @@ def main():
     val_tmp = os.path.join(base_dir, 'data', data_subdir,
                            'dpo_ready', f'_qwen_dpo_val_split_{split_suffix}.json')
 
-    with open(train_tmp, 'w') as f:
-        json.dump(train_data_raw, f)
-    with open(val_tmp, 'w') as f:
-        json.dump(val_data_raw, f)
+    local_rank = int(os.environ.get('LOCAL_RANK', 0))
+    if local_rank == 0:
+        with open(train_tmp, 'w') as f:
+            json.dump(train_data_raw, f)
+        with open(val_tmp, 'w') as f:
+            json.dump(val_data_raw, f)
+    if args.devices > 1:
+        import torch.distributed as dist
+        if dist.is_initialized():
+            dist.barrier()
+        else:
+            import time
+            while not os.path.exists(train_tmp) or os.path.getsize(train_tmp) < 100:
+                time.sleep(1)
 
     train_dataset = DPOPreferenceDataset(
         data_path=train_tmp,
