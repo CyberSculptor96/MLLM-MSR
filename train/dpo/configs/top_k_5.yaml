@@ -1,0 +1,6 @@
+# Stochastic Top-K Negative Sampling (K=5)
+# RoDPO core strategy: sample from top-5 scored negatives
+
+strategy: top_k
+top_k: 5
+max_epochs: 2

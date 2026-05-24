@@ -1,0 +1,5 @@
+# Hard (Argmax) Negative Sampling
+# Selects the highest-scoring non-interacted item as negative
+
+strategy: hard
+max_epochs: 2

@@ -25,6 +25,8 @@ import functools
 import random
 from typing import List, Dict
 
+import yaml
+
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -40,25 +42,20 @@ from peft import PeftModel, LoraConfig, get_peft_model
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from dpo_dataset import DPOPreferenceDataset
 
-# ============ Hyperparameters ============
-DEFAULT_CONFIG = {
-    'dpo_beta': 0.1,
-    'lr': 5e-6,
-    'max_epochs': 3,
-    'batch_size': 1,
-    'accumulate_grad_batches': 2,
-    'max_length': 1024,
-    'gradient_clip_val': 1.0,
-    'top_k': 50,
-    'lora_r': 16,
-    'lora_alpha': 32,
-    'lora_dropout': 0.1,
-    # Validation & logging
-    'val_check_interval': 2000,    # validate every N training steps
-    'val_num_samples': 500,       # DPO validation set size
-    'eval_num_users': 50,         # ranking eval users (lightweight)
-    'warmup_steps': 100,
-}
+# ============ Config Loading ============
+CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configs')
+
+
+def load_config(config_path=None):
+    """Load config: default.yaml -> config_path (override) -> returns dict."""
+    default_path = os.path.join(CONFIG_DIR, 'default.yaml')
+    with open(default_path, 'r') as f:
+        config = yaml.safe_load(f)
+    if config_path:
+        with open(config_path, 'r') as f:
+            overrides = yaml.safe_load(f) or {}
+        config.update(overrides)
+    return config
 
 # ============ Prompt Template ============
 PROMPT_TEMPLATE = (
@@ -485,7 +482,9 @@ def dpo_collate_fn(examples: List[dict]) -> List[dict]:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--strategy', type=str, default='top_k',
+    parser.add_argument('--config', type=str, default=None,
+                        help='Path to YAML config file (overrides default.yaml)')
+    parser.add_argument('--strategy', type=str, default=None,
                         choices=['random', 'hard', 'top_k'])
     parser.add_argument('--dataset', type=str, default='microlens',
                         choices=['video_games', 'microlens'])
@@ -511,7 +510,8 @@ def main():
                         help='Resume training from this checkpoint path')
     args = parser.parse_args()
 
-    config = DEFAULT_CONFIG.copy()
+    # Load config: default.yaml -> --config yaml -> CLI overrides
+    config = load_config(args.config)
     if args.beta:
         config['dpo_beta'] = args.beta
     if args.lr:
@@ -522,6 +522,9 @@ def main():
         config['val_check_interval'] = args.val_check_interval
     if args.top_k:
         config['top_k'] = args.top_k
+
+    # Resolve strategy: CLI > config yaml > default
+    strategy = args.strategy or config.get('strategy', 'top_k')
 
     # Resolve data paths
     base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
@@ -536,15 +539,15 @@ def main():
         image_dir = os.path.join(base_dir, 'data', 'microlens', 'images')
         test_path = os.path.join(base_dir, 'data', 'microlens', 'dpo_ready', 'test.json')
 
-    suffix = f'dpo_{args.dataset}_{args.strategy}'
-    if args.strategy == 'top_k' and config['top_k'] != 50:
+    suffix = f'dpo_{args.dataset}_{strategy}'
+    if strategy == 'top_k' and config['top_k'] != 50:
         suffix += f"_k{config['top_k']}"
     save_dir = os.path.join(base_dir, 'checkpoints', suffix)
     log_dir = os.path.join(base_dir, 'tb_logs')
 
     print("=" * 60)
     print("DPO Training Configuration:")
-    print(f"  Strategy: {args.strategy}")
+    print(f"  Strategy: {strategy}")
     print(f"  Dataset: {args.dataset}")
     print(f"  Beta: {config['dpo_beta']}")
     print(f"  LR: {config['lr']}")
@@ -609,7 +612,7 @@ def main():
 
     # Create datasets
     # Write splits to tmp files for DPOPreferenceDataset (unique per strategy to avoid collision)
-    split_suffix = f"{args.strategy}_k{args.top_k}" if args.strategy == 'top_k' else args.strategy
+    split_suffix = f"{strategy}_k{config['top_k']}" if strategy == 'top_k' else strategy
     train_tmp = os.path.join(base_dir, 'data', args.dataset if args.dataset != 'video_games' else 'amazon',
                              'dpo_ready', f'_dpo_train_split_{split_suffix}.json')
     val_tmp = os.path.join(base_dir, 'data', args.dataset if args.dataset != 'video_games' else 'amazon',
@@ -632,7 +635,7 @@ def main():
     train_dataset = DPOPreferenceDataset(
         data_path=train_tmp,
         image_dir=image_dir,
-        negative_strategy=args.strategy,
+        negative_strategy=strategy,
         top_k=config['top_k'],
     )
     val_dataset = DPOPreferenceDataset(
@@ -652,8 +655,8 @@ def main():
             for uid, items in raw_cache.items()
         }
         train_dataset.set_score_cache(cache)
-        print(f"  Score cache loaded: {len(cache)} users → {args.strategy} from epoch 0!")
-    elif args.strategy != 'random':
+        print(f"  Score cache loaded: {len(cache)} users → {strategy} from epoch 0!")
+    elif strategy != 'random':
         print(f"  No score cache → epoch 0 will use random negatives (RoDPO paper approach)")
 
     # Load test data for ranking evaluation
@@ -706,7 +709,7 @@ def main():
             train_dataset=train_dataset,
             processor=processor,
             image_dir=image_dir,
-            strategy=args.strategy,
+            strategy=strategy,
             cache_dir=cache_dir,
             max_users=args.cache_max_users,
             batch_size=8,
@@ -737,7 +740,7 @@ def main():
         logger=tb_logger,
     )
 
-    print(f"\nStarting DPO training ({args.strategy})...")
+    print(f"\nStarting DPO training ({strategy})...")
     print(f"  Monitor: tensorboard --logdir {log_dir}")
     trainer.fit(pl_module, ckpt_path=args.ckpt_path)
     print(f"\nTraining complete! Checkpoints saved to: {save_dir}")

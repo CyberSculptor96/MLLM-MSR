@@ -1,0 +1,5 @@
+# Random Negative Sampling (Top-K=50 ≈ uniform from top candidates)
+
+strategy: top_k
+top_k: 50
+max_epochs: 2

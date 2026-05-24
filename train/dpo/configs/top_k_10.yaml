@@ -1,0 +1,6 @@
+# Stochastic Top-K Negative Sampling (K=10)
+# Intermediate K value between hard (K=1) and random (K=50)
+
+strategy: top_k
+top_k: 10
+max_epochs: 2

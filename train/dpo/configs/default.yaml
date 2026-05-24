@@ -1,0 +1,27 @@
+# Default DPO Training Configuration
+# Override with strategy-specific configs or CLI arguments
+
+# DPO
+dpo_beta: 0.1
+
+# Optimization
+lr: 5.0e-6
+max_epochs: 3
+batch_size: 1
+accumulate_grad_batches: 2
+gradient_clip_val: 1.0
+warmup_steps: 100
+
+# Model
+max_length: 1024
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.1
+
+# Negative sampling
+top_k: 50
+
+# Validation & logging
+val_check_interval: 2000
+val_num_samples: 500
+eval_num_users: 50
