@@ -31,7 +31,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import lightning as L
-from lightning.pytorch.callbacks import Callback, EarlyStopping
+from lightning.pytorch.callbacks import Callback, EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader, Dataset
 from PIL import Image
@@ -507,7 +507,9 @@ def main():
     parser.add_argument('--skip_cache_refresh', action='store_true',
                         help='Skip score cache refresh between epochs (use initial cache only)')
     parser.add_argument('--ckpt_path', type=str, default=None,
-                        help='Resume training from this checkpoint path')
+                        help='Resume training from Lightning checkpoint (.ckpt)')
+    parser.add_argument('--tb_version', type=int, default=None,
+                        help='TensorBoard version number (for resume, reuse same version)')
     args = parser.parse_args()
 
     # Load config: default.yaml -> --config yaml -> CLI overrides
@@ -696,14 +698,21 @@ def main():
     pl_module.set_val_dataloader(val_dataloader)
 
     # TensorBoard logger
-    tb_logger = TensorBoardLogger(
-        save_dir=log_dir,
-        name=suffix,
-    )
+    tb_kwargs = dict(save_dir=log_dir, name=suffix)
+    if args.tb_version is not None:
+        tb_kwargs['version'] = args.tb_version
+    tb_logger = TensorBoardLogger(**tb_kwargs)
 
     # Callbacks
     cache_dir = os.path.join(save_dir, 'score_caches')
+    ckpt_dir = os.path.join(save_dir, 'lightning_ckpt')
     callbacks = [
+        ModelCheckpoint(
+            dirpath=ckpt_dir,
+            filename='last',
+            save_last=True,
+            every_n_train_steps=config['val_check_interval'],
+        ),
         SaveDPOCallback(save_dir, processor),
         ScoreCacheRefreshCallback(
             train_dataset=train_dataset,
