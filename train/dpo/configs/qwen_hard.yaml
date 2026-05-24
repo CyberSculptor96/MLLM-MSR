@@ -1,0 +1,4 @@
+# Qwen2.5-VL Hard (Argmax) Negative Sampling
+
+strategy: hard
+max_epochs: 2

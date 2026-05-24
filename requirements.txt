@@ -1,8 +1,8 @@
 # PyTorch (install separately with CUDA support)
-# pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
+# pip install torch==2.4.0+cu121 torchvision==0.19.0+cu121 --index-url https://download.pytorch.org/whl/cu121
 
 # Transformers ecosystem
-transformers==4.44.0
+transformers==4.49.0
 accelerate==0.33.0
 peft==0.12.0
 bitsandbytes==0.43.1
@@ -11,13 +11,30 @@ bitsandbytes==0.43.1
 lightning==2.4.0
 deepspeed==0.14.4
 
+# Qwen2.5-VL support
+qwen-vl-utils==0.0.14
+einops==0.8.2
+
 # Utilities
-pillow
-scikit-learn
-tqdm
-pandas
-numpy
-scipy
+pillow==12.2.0
+scikit-learn==1.8.0
+tqdm==4.67.3
+pandas==3.0.3
+numpy==1.26.4
+scipy==1.17.1
+PyYAML==6.0.3
+
+# TensorBoard & logging
+tensorboard==2.20.0
+protobuf==7.35.0
+grpcio==1.80.0
+Markdown==3.10.2
+Werkzeug==3.1.8
+
+# Build tools
+setuptools==70.3.0
+wheel==0.46.3
+packaging==24.2
 
 # Flash Attention (install separately with precompiled wheel)
-# flash-attn==2.6.3
+# pip install flash-attn==2.6.3 --no-build-isolation
