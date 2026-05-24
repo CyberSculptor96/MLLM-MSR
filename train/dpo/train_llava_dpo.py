@@ -443,11 +443,21 @@ class ScoreCacheRefreshCallback(Callback):
 
 
 class SaveDPOCallback(Callback):
-    """Save DPO LoRA adapter after each epoch."""
+    """Save DPO LoRA adapter every val_check_interval steps (before eval) and after each epoch."""
 
     def __init__(self, save_dir: str, processor):
         self.save_dir = save_dir
         self.processor = processor
+
+    def on_validation_start(self, trainer, pl_module):
+        """Save weights before each validation (every val_check_interval steps)."""
+        if trainer.global_rank == 0:
+            step = trainer.global_step
+            save_path = os.path.join(self.save_dir, f"step_{step}")
+            os.makedirs(save_path, exist_ok=True)
+            pl_module.model.save_pretrained(save_path)
+            self.processor.save_pretrained(save_path)
+            print(f"\n[Saved DPO LoRA to {save_path} (step {step})]")
 
     def on_train_epoch_end(self, trainer, pl_module):
         if trainer.global_rank == 0:
