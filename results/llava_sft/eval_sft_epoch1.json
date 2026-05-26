@@ -1,0 +1,11 @@
+{
+  "model": "sft_microlens/epoch_1",
+  "dataset": "microlens",
+  "num_users": 100,
+  "token_fix": "encode-based (▁Yes/▁No)",
+  "recall_at_5": 0.2700,
+  "mrr_at_5": 0.1128,
+  "avg_p_yes_pos": 0.3224,
+  "avg_p_yes_neg": 0.3287,
+  "separation": -0.0063
+}
